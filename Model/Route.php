@@ -20,7 +20,7 @@ class Route extends RouteAppModel {
 	 * @access public
 	 */
 	public $name = 'Route';
-	
+
 	/**
 	 * Model table
 	 *
@@ -28,7 +28,7 @@ class Route extends RouteAppModel {
 	 * @access public
 	 */
 	public $useTable = 'routes';
-		
+
 	/**
 	 * Disable caching of DB sources
 	 * Setting to true causes a Missing Database Table error when you visit
@@ -36,9 +36,9 @@ class Route extends RouteAppModel {
 	 *
 	 * @var string
 	 * @access public
-	 */		
-	public $cacheSources = false;	
-	
+	 */
+	public $cacheSources = false;
+
 	/**
 	 * Validation
 	 *
@@ -67,11 +67,11 @@ class Route extends RouteAppModel {
 			),
 			'codecheck' => array(
 				'rule' => array('isBodyValid'),
-				'message' => 'The body must contain a valid PHP array to be passed to the Router in the form: array()', 
+				'message' => 'The body must contain a valid PHP array to be passed to the Router in the form: array()',
 			),
 		),
 	);
-		
+
 	/**
 	 * Validation: Check if alias exists already for another Route
 	 *
@@ -84,10 +84,10 @@ class Route extends RouteAppModel {
 		if (isset($this->data['Route']['id'])) {
 			$id = $this->data['Route']['id'];
 		}
-	
-		$params = array('conditions' => 
+
+		$params = array('conditions' =>
 			array(
-				'Route.alias' => $check, 
+				'Route.alias' => $check,
 				'Route.id !=' => $id
 			)
 		);
@@ -113,9 +113,9 @@ class Route extends RouteAppModel {
 		$thealias = $check['alias'];
 		$firstchar = substr($thealias, 0, 1);
 		App::uses('Sanitize', 'Utility');
-		$thealiassanitized = Sanitize::paranoid($thealias, array('/', '\\', '_', '-'));
+		$thealiassanitized = Sanitize::paranoid($thealias, array('/', '\\', '_', '-', ':'));
 		if (($firstchar == "/") || ($firstchar == "\\")) {
-			return false;				
+			return false;
 		}
 		else if ($thealiassanitized == $thealias) {
 			return true;
@@ -124,14 +124,14 @@ class Route extends RouteAppModel {
 			return false;
 		}
 	}
-		 
+
 	/**
 	 * Validation: Check if body entered as a string is an array
 	 * e.g. array('controller' => 'nodes', 'action' => 'view', 'type' => 'page', 'slug' => 'about')
 	 *
 	 * @param array $check
 	 * @return boolean
-	 */	 
+	 */
 	function isBodyValid($check) {
 		$thebody = $check['body'];
 		$testing = @eval('return '.$thebody.';');

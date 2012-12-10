@@ -1,0 +1,4 @@
+*.bak
+*.swp
+*.swo
+Config/routes.php
