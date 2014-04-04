@@ -19,7 +19,7 @@ class RouteActivation {
 	 * @param  object $controller Controller
 	 * @return boolean
 	 */
-	public function beforeActivation(Controller $controller) {
+	public function beforeActivation(&$controller) {
 		return true;
 	}
 
@@ -29,9 +29,11 @@ class RouteActivation {
 	 * @param object $controller Controller
 	 * @return void
 	 */
-	public function onActivation(Controller $controller) {
-		$controller->Croogo->addAco('Route'); 
-		$this->_schema('create');
+	public function onActivation(&$controller) {
+		$controller->Croogo->addAco('Route');
+		App::uses('CroogoPlugin', 'Extensions.Lib');
+		$CroogoPlugin = new CroogoPlugin();
+		$CroogoPlugin->migrate('Route');
 	}
 
 	/**
@@ -51,36 +53,6 @@ class RouteActivation {
 	 * @return void
 	 */
 	public function onDeactivation(&$controller) {
-		$controller->Croogo->removeAco('Route'); 
-		$this->_schema('drop');
-	}
-    		
-	/**
-	 * Schema
-	 *
-	 * @param string sql action
-	 * @return void
-	 * @access protected
-	 */
-	protected function _schema($action = 'create') {
-		App::uses('File', 'Utility');
-		App::import('Model', 'CakeSchema', false);
-		App::import('Model', 'ConnectionManager');
-		$db = ConnectionManager::getDataSource('default');
-		if(!$db->isConnected()) {
-			$this->Session->setFlash(__('Could not connect to database.'), 'default', array('class' => 'error'));
-		} else {
-			CakePlugin::load('Route'); //is there a better way to do this?
-			$schema =& new CakeSchema(array('name'=>'Route', 'plugin'=>'Route'));
-			$schema = $schema->load();
-			foreach($schema->tables as $table => $fields) {
-			  if($action == 'create') {
-			  	$sql = $db->createSchema($schema, $table);
-			  } else {
-  			  $sql = $db->dropSchema($schema, $table);
-			  }
-				$db->execute($sql);
-			}
-		}
+		$controller->Croogo->removeAco('Route');
 	}
 }

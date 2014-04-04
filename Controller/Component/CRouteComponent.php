@@ -1,4 +1,7 @@
 <?php
+
+App::uses('Component', 'Controller');
+
 /**
  * CRoute Component
  *
@@ -27,16 +30,16 @@ class CRouteComponent extends Component {
      *
      * @var array
      * @access public
-     */	
+     */
     public $components = array(
-        'Croogo',
+		'Croogo.Croogo',
     );
 
     /**
      * Default filename to store custom routes in
      *
      * @var string
-     */		
+     */
     public $customRoutesFilenameWithoutPath = 'routes.php';
 
     /**
@@ -54,17 +57,14 @@ class CRouteComponent extends Component {
      *
      * @param object $controller
      */
-    public function initialize(&$controller) {
-        // saving the controller reference for later use
-        $this->controller =& $controller;
-
-        //pr($this->controller);
-        //die();
+    public function initialize(Controller $controller) {
+        //TODO: the controller instance is needed here, but initialize won't
+        //accept $controller as a reference...
         $this->Route = ClassRegistry::init('Route.Route');
 
-        //custom node settings 
-        if ($this->controller->name == 'Nodes') {
-            $this->controller->Security->disabledFields = array('route_alias', 'route_status');
+        //custom node settings
+        if ($controller->name == 'Nodes') {
+            $controller->Security->disabledFields = array('route_alias', 'route_status');
         }
     }
 
@@ -82,7 +82,7 @@ class CRouteComponent extends Component {
      * Retrieve Routes from Database
      *
      * @return array
-     */	
+     */
     public function get_custom_routes_from_db() {
         $params = array('conditions' => array('Route.status' => 1));
         $routes = $this->Route->find('all', $params);
@@ -93,7 +93,7 @@ class CRouteComponent extends Component {
      * Generate CroogoRouter::connect PHP code to save in the customRoutesFile (e.g. routes.php)
      *
      * @return string
-     */	
+     */
     public function get_custom_routes_code() {
         $routes = $this->get_custom_routes_from_db();
         $newline = "\n";
@@ -115,13 +115,13 @@ class CRouteComponent extends Component {
      *
      * @param integer $perms
      * @return string
-     */	
+     */
     public function _resolveperms($perms) {
         $oct = str_split( strrev( decoct( $perms ) ), 1 );
         //               0      1      2      3      4      5      6      7
         $masks = array( '---', '--x', '-w-', '-wx', 'r--', 'r-x', 'rw-', 'rwx' );
         return(
-            sprintf( 
+            sprintf(
                 '%s %s %s',
                 array_key_exists( $oct[ 2 ], $masks ) ? $masks[ $oct[ 2 ] ] : '###',
                 array_key_exists( $oct[ 1 ], $masks ) ? $masks[ $oct[ 1 ] ] : '###',
@@ -131,7 +131,7 @@ class CRouteComponent extends Component {
     }
 
     /**
-     * Write Custom Routes to the custom route file that is included_once by the croogo_router.php file	
+     * Write Custom Routes to the custom route file that is included_once by the croogo_router.php file
      *
      * @param array $check
      * @return boolean
@@ -140,7 +140,7 @@ class CRouteComponent extends Component {
         $path = $this->get_custom_routes_filepath();
         $resultArray = array();
         $resultArray['output'] = '';
-        $resultArray['code'] = '';			
+        $resultArray['code'] = '';
 
         try {
             $permissions = @fileperms ( $path );
@@ -166,35 +166,35 @@ class CRouteComponent extends Component {
                 . '<br /><br />'
                 . '<strong>' . __d('croogo', 'File Location: %s', $path) . '</strong>'
                 . '<br />';
-                
+
                 if ($permissions != 0) {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'File Permissions are: %s', substr(sprintf('%o', $permissions), -4)) . '</strong>';
                 } else {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'File Permissions are:') . '</strong>' . ' ' . __d('croogo', 'Unknown (permissions issue?)');
                 }
-                
+
                 $resultArray['output'] .= '<br />';
-                
+
                 if ($permissions == 0) {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'File Mask is:') . '</strong>' . ' ' . __d('croogo', 'Unknown (permissions issue?)');
                 } else {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'File Mask is: %s', $this->_resolveperms($permissions)) . ' </strong>';
                 }
-                
+
                 $resultArray['output'] .= '<br />';
-                
+
                 if ($fileowner === false) {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'Owned by User:') . '</strong>' . ' ' . __d('croogo', 'Unknown (permissions issue?)');
                 } else {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'Owned by User: %s', $fileownerarray['name']) . '</strong>';
                 }
-                
+
                 $resultArray['output'] .= '<br />'
                 . '<strong>' . __d('croogo', 'Owned by Group:', $filegrouparray['name']) . ' </strong>'
                 . '<br />'
                 . '<strong>' . __d('croogo', 'Webserver running as User: %s', $webserver_process_user_array['name']) . '</strong>'
                 . '<br />'
-                . '<strong>' . __d('croogo', 'Webserver running in Group: %s', $webserver_process_group_array['name']) . '</strong>';					
+                . '<strong>' . __d('croogo', 'Webserver running in Group: %s', $webserver_process_group_array['name']) . '</strong>';
             }
         } catch (Exception $e) {
             //do nothing

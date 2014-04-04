@@ -1,4 +1,7 @@
 <?php
+
+App::uses('ModelBehavior', 'Model');
+
 /**
  * Route Behavior
  *
@@ -18,15 +21,15 @@ class RouteBehavior extends ModelBehavior {
      *
      * @var array
      * @access public
-     */	
+     */
     public $components = array('CRoute');
-	
+
     /**
      * Default filename to store custom routes in
      *
      * @var string
      * @access public
-     */		
+     */
     public $customRoutesFilenameWithoutPath = 'routes.php';
 
     /**
@@ -36,7 +39,7 @@ class RouteBehavior extends ModelBehavior {
      * @param array  $config
      * @return void
      */
-    public function setup(&$model, $config = array()) {
+	public function setup(Model $model, $config = array()) {
         if (is_string($config)) {
                 $config = array($config);
         }
@@ -51,7 +54,7 @@ class RouteBehavior extends ModelBehavior {
      * @param boolean $primary
      * @return array
      */
-    public function afterFind(&$model, $results = array(), $primary = false) {
+	public function afterFind(Model $model, $results, $primary = false) {
         if ($model->alias == 'Node') {
             foreach ($results AS $i => $result) {
                 $results[$i]['Route'] = array();
@@ -59,7 +62,7 @@ class RouteBehavior extends ModelBehavior {
         }
         return $results;
     }
-		
+
     /**
      * beforeValidate callback
      * Invoked after a Node is saved/edited
@@ -67,7 +70,7 @@ class RouteBehavior extends ModelBehavior {
      * @param object  $model
      * @return boolean
      */
-    public function beforeValidate(&$model) {
+    public function beforeValidate(Model $model, $options = array()) {
         /* these validation rules may cause validation to fail on node submit */
         $model->validate['route_alias'] = array(
             'aliasDoesNotExist' => array(
@@ -81,26 +84,26 @@ class RouteBehavior extends ModelBehavior {
         );
         return true; //we have added the validation checks we want the system to invoke
     }
-	
+
     /*
      *  public function beforeSave(&$model) {
      *      return false;
      *  }
     */
-	
+
     /**
      * afterDelete callback
      * Invoked after a Node is deleted
      *
      * @param object  $model
-     */	
-    public function afterDelete(&$model) {
+     */
+    public function afterDelete(Model $model) {
         if ($model->name == 'Node') {
             //see if a route exists for this node
             //lets look for the node_id in the Routes table
             $node_id = $model->data['Node']['id'];
             $params = array('conditions' => array('Route.node_id' => $node_id));
-            $this->Route = ClassRegistry::init('Route.Route');;		
+            $this->Route = ClassRegistry::init('Route.Route');;
             $matchingRoute = $this->Route->find('first', $params);
             if ($matchingRoute != null) { //let's delete the matching route
                 $routeID = $matchingRoute['Route']['id'];
@@ -110,20 +113,20 @@ class RouteBehavior extends ModelBehavior {
             }
         }
     }
-	
+
     /**
      * afterSave callback
      * Invoked after a Node is saved/edited
      *
      * @param object  $model
      * @param boolean   $created
-     */		
-    public function afterSave(&$model, $created) {
+     */
+    public function afterSave(Model $model, $created, $options = array()) {
         if ($model->alias == 'Node') {
             $data = $model->data['Node'];
-			
+
             //this statement prevents code from executing when node is deleted
-            if (isset($data['route_alias'])) { 
+            if (isset($data['route_alias'])) {
                 $route_alias = $data['route_alias'];
                 //disabled route_status checkboxes don't submit any data'
                 //assume they are disabled and checked if not defined
@@ -140,15 +143,15 @@ class RouteBehavior extends ModelBehavior {
 
                 //lets look for the node_id in the Routes table
                 $params = array('conditions' => array('Route.node_id' => $node_id));
-                $this->Route = ClassRegistry::init('Route.Route');;		
+                $this->Route = ClassRegistry::init('Route.Route');;
                 $matchingRoute = $this->Route->find('first', $params);
-				
-                if ($matchingRoute != null) { //let's update our route with the new path 
+
+                if ($matchingRoute != null) { //let's update our route with the new path
                     if ((trim($route_alias)) == '') {
                         //empty alias - delete the route id
                         $route_id = $matchingRoute['Route']['id'];
                         $this->Route->delete($route_id, false);
-                    } else { 
+                    } else {
                         //non-empty alias
                         $route_id = $matchingRoute['Route']['id'];
                         $this->Route->id = $route_id;
@@ -158,7 +161,7 @@ class RouteBehavior extends ModelBehavior {
                         $this->Route->saveField('body', "array('plugin' => 'nodes', 'controller' => 'nodes', 'action' => 'view', 'type' => '".$data['type']."', 'slug' => '".$data['slug']."')");
                     }
                 } else {
-                    //create a new route that points to the node 
+                    //create a new route that points to the node
                     $this->Route->create();
                     $this->data = array();
                     $this->data['Route'] = array();
@@ -167,18 +170,18 @@ class RouteBehavior extends ModelBehavior {
                     $this->data['Route']['body'] = "array('plugin' => 'nodes', 'controller' => 'nodes', 'action' => 'view', 'type' => '".$data['type']."', 'slug' => '".$data['slug']."')";
                     $this->data['Route']['status'] = $route_status;
                     if ($this->Route->save($this->data)) {
-                        //Saved	
+                        //Saved
                     } else {
                         //Not Saved
                     }
                 }
-				
+
                 clearCache();
                 $this->write_custom_routes_file();
             }
         }
     }
-		
+
     /**
      * Determine path of customRoutesFile
      *
@@ -188,7 +191,7 @@ class RouteBehavior extends ModelBehavior {
         $path = APP . 'Plugin' . DS . 'Route' . DS . 'Config' . DS . $this->customRoutesFilenameWithoutPath;
         return $path;
     }
-	
+
     /**
      * Retrieve Routes from Database
      *
@@ -199,7 +202,7 @@ class RouteBehavior extends ModelBehavior {
         $routes = $this->Route->find('all', $params);
         return $routes;
     }
-	
+
     /**
      * Generate CroogoRouter::connect PHP code to save in the customRoutesFile (e.g. routes.php)
      *
@@ -211,7 +214,7 @@ class RouteBehavior extends ModelBehavior {
         $code = "";
         $code .= "<?php" . $newline;
         $code .= "#DO NOT EDIT THIS FILE DIRECTLY!" . $newline;
-        $code .= "#IT IS UPDATED BY THE ROUTE PLUGIN WHENEVER YOU ADD, DELETE, ENABLE OR DISABLE A ROUTE." . $newline;		
+        $code .= "#IT IS UPDATED BY THE ROUTE PLUGIN WHENEVER YOU ADD, DELETE, ENABLE OR DISABLE A ROUTE." . $newline;
         foreach($routes as $route) {
             $testing = eval('return '.$route['Route']['body'].';');
             if (is_array($testing)) {
@@ -220,7 +223,7 @@ class RouteBehavior extends ModelBehavior {
         }
         return $code;
     }
-	
+
     /**
      * Convert UNIX File Permissions Umask into human-readable string
      *
@@ -232,7 +235,7 @@ class RouteBehavior extends ModelBehavior {
         //               0      1      2      3      4      5      6      7
         $masks = array( '---', '--x', '-w-', '-wx', 'r--', 'r-x', 'rw-', 'rwx' );
         return(
-            sprintf( 
+            sprintf(
                 '%s %s %s',
                 array_key_exists( $oct[ 2 ], $masks ) ? $masks[ $oct[ 2 ] ] : '###',
                 array_key_exists( $oct[ 1 ], $masks ) ? $masks[ $oct[ 1 ] ] : '###',
@@ -240,9 +243,9 @@ class RouteBehavior extends ModelBehavior {
             )
         );
     }
-	
+
     /**
-     * Write Custom Routes to the custom route file that is included_once by the croogo_router.php file	
+     * Write Custom Routes to the custom route file that is included_once by the croogo_router.php file
      *
      * @param array $check
      * @return boolean
@@ -251,8 +254,8 @@ class RouteBehavior extends ModelBehavior {
         $path = $this->get_custom_routes_filepath();
         $resultArray = array();
         $resultArray['output'] = '';
-        $resultArray['code'] = '';			
-	
+        $resultArray['code'] = '';
+
         try {
             $permissions = @fileperms ( $path );
             $fileowner = @fileowner($path);
@@ -261,7 +264,7 @@ class RouteBehavior extends ModelBehavior {
             $filegrouparray = posix_getgrgid($filegroup);
             $webserver_process_user_array = posix_getpwuid(posix_geteuid());
             $webserver_process_group_array = posix_getgrgid($filegroup);
-		
+
             if (is_writable($path)){
                 $fp = @fopen($path, 'w');
                 if ($fp !== false) {
@@ -277,29 +280,29 @@ class RouteBehavior extends ModelBehavior {
                 . '<br /><br />'
                 . '<strong>' . __d('croogo', 'File Location: %s', $path) . '</strong>'
                 . '<br />';
-                
+
                 if ($permissions != 0) {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'File Permissions are: %s', substr(sprintf('%o', $permissions), -4)) . '</strong>';
                 } else {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'File Permissions are:') . '</strong>' . ' ' . __d('croogo', 'Unknown (permissions issue?)');
                 }
-                
+
                 $resultArray['output'] .= '<br />';
-                
+
                 if ($permissions == 0) {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'File Mask is:') . '</strong>' . ' ' . __d('croogo', 'Unknown (permissions issue?)');
                 } else {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'File Mask is: %s', $this->_resolveperms($permissions)) . ' </strong>';
                 }
-                
+
                 $resultArray['output'] .= '<br />';
-                
+
                 if ($fileowner === false) {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'Owned by User:') . '</strong>' . ' ' . __d('croogo', 'Unknown (permissions issue?)');
                 } else {
                     $resultArray['output'] .= '<strong>' . __d('croogo', 'Owned by User: %s', $fileownerarray['name']) . '</strong>';
                 }
-                
+
                 $resultArray['output'] .= '<br />'
                 . '<strong>' . __d('croogo', 'Owned by Group:', $filegrouparray['name']) . ' </strong>'
                 . '<br />'
@@ -311,7 +314,7 @@ class RouteBehavior extends ModelBehavior {
             //do nothing
         }
     }
-	
+
     /**
      * Validation: Check if alias exists already for another Route
      *
@@ -321,13 +324,13 @@ class RouteBehavior extends ModelBehavior {
     public function doesAliasExist($check) {
         $check = $check->data['Node'];
         $routeAlias = $check['route_alias'];
-	
+
         if (!isset($check['id'])) {
             $nodeId = -1;
         } else {
             $nodeId = $check['id'];
         }
-	
+
         if ($routeAlias == '')	{
             return true; //allow blank aliases
         } else {
@@ -336,8 +339,8 @@ class RouteBehavior extends ModelBehavior {
             } else { //we are editing a route
                 $params = array('conditions' => array('Route.alias' => $routeAlias, 'Route.node_id !=' => $nodeId));
             }
-	
-            $this->Route = ClassRegistry::init('Route.Route');;		
+
+            $this->Route = ClassRegistry::init('Route.Route');;
             $numMatches = 0;
             $numMatches = $this->Route->find('count', $params);
 
@@ -348,13 +351,13 @@ class RouteBehavior extends ModelBehavior {
             }
         }
     }
-		
+
     /**
      * Validation: Check if alias entered contains any bad characters
      *
      * @param array $check
      * @return boolean
-     */			
+     */
     public function isAliasValid($check) {
         $check = $check->data['Node'];
         $alias = $check['route_alias'];
@@ -363,11 +366,11 @@ class RouteBehavior extends ModelBehavior {
         $sanitized = Sanitize::paranoid($alias, array('/', '\\', '_', '-'));
 
         if (($char == '/') || ($char == '\\')) {
-            return false;				
+            return false;
         } else if ($sanitized == $alias) {
             return true;
         } else {
             return false;
         }
-    }	
+    }
 }
