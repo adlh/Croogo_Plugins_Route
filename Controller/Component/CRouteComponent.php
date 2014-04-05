@@ -58,8 +58,6 @@ class CRouteComponent extends Component {
      * @param object $controller
      */
     public function initialize(Controller $controller) {
-        //TODO: the controller instance is needed here, but initialize won't
-        //accept $controller as a reference...
         $this->Route = ClassRegistry::init('Route.Route');
 
         //custom node settings
