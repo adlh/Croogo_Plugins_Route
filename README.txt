@@ -2,7 +2,7 @@ Description
 
 This Route plugin for Croogo lets you create pretty URLs for nodes or other routes from the Admin Interface.
 
-Version: 1.5 (for Croogo 1.5 & 1.6 / CakePHP 2.x)
+Version: 2.0 (for Croogo 2.0 / CakePHP 2.x)
 
 IMPORTANT NOTE: 
 This README.txt file should be located at app/Plugin/Route/README.txt if you have installed the Route plugin correctly into your Croogo 1.4/CakePHP 2.x app folder.
@@ -25,6 +25,10 @@ Instalation
    mystuff/rocks
    yourstuff/really-really-really/sucks
    NOTE: Take care not to conflict with any of the default routes present!
+   
+   **New**: Routes with parameters can also be used, where parameters are
+   specified with a ':'. Example:
+   news/:slug
 
 5. Save the Node and the custom routes file will update, as long as it is writable.
 
@@ -37,7 +41,7 @@ NOTE #2: On the "List Routes" page, routes linked to nodes will have an extra op
 You may also try creating your own custom routes using the "New Route" button on the "List Routes" page, or from the "Extensions>Route>Create Route" menu item. The body of the route must be contained inside an array() for the time being, in this version of the plugin. This will let you map routes to certain controllers, but not to specific paths. 
 
 Example of Route Body:
-array('controller' => 'nodes', 'action' => 'view', 'type' => 'page', 20)
+array('plugin' => 'nodes', 'controller' => 'nodes', 'action' => 'view', 'type' => 'page', 20)
 where 20 is the ID of the node, and the node's type is a 'page'
 
 Author: Damian Grant

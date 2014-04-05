@@ -11,14 +11,14 @@ Croogo::hookRoutes('Route', array('priority' => 1));
  *
  * This plugin's Route behavior will be attached whenever Node model is loaded.
  */
-Croogo::hookBehavior('Node', 'Route.Route', array());
+Croogo::hookBehavior('Nodes.Node', 'Route.Route', array());
 
 /**
  * Component
  *
  * This plugin's Example component will be loaded in ALL controllers.
  */
-Croogo::hookComponent('Nodes', 'Route.CRoute');
+Croogo::hookComponent('Nodes.Nodes', 'Route.CRoute');
 
 /**
  * Admin menu (navigation)
